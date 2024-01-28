@@ -3,7 +3,7 @@ install.packages("pdftools", dependencies = TRUE)
 library(pdftools)
 
 # Set the path to your folder containing PDF files
-folder_path <- "/Users/s5320381/Downloads/abc"
+folder_path <- "" # Add the folder  you have the files you want to change
 
 # List all PDF files in the folder
 pdf_files <- list.files(folder_path, pattern = "\\.pdf$", full.names = TRUE)
