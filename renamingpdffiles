@@ -1,0 +1,63 @@
+# Install and load the pdftools package
+install.packages("pdftools", dependencies = TRUE)
+library(pdftools)
+
+# Set the path to your folder containing PDF files
+folder_path <- "/Users/s5320381/Downloads/abc"
+
+# List all PDF files in the folder
+pdf_files <- list.files(folder_path, pattern = "\\.pdf$", full.names = TRUE)
+
+# Function to extract the title and year from a PDF file
+extract_title <- function(pdf_path) {
+  # Use pdftools to extract metadata
+  metadata <- pdf_info(pdf_path)
+  
+  # Extract the title (use $keys$Title based on your observation)
+  title <- metadata$keys$Title
+  
+  # Extract the year
+  if ("creationdate" %in% names(metadata$info)) {
+    year <- substr(metadata$info$creationdate, 1, 4)
+  } else if ("created" %in% names(metadata$info)) {
+    year <- substr(metadata$info$created, 1, 4)
+  } else {
+    # If neither exists, set a default year to NULL
+    year <- NULL
+  }
+  
+  return(list(title = title, year = year))
+}
+
+# Create a counter for UnknownTitle files
+unknown_title_counter <- 1
+
+# Iterate through each PDF file, extract the title and year, and rename the file
+for (pdf_file in pdf_files) {
+  # Extract the title and year
+  metadata <- extract_title(pdf_file)
+  
+  # If title is NULL or empty, use a default name with a unique identifier
+  if (is.null(metadata$title) || metadata$title == "") {
+    metadata$title <- paste0("UnknownTitle_", unknown_title_counter)
+    unknown_title_counter <- unknown_title_counter + 1
+  }
+  
+  # Clean up the title for a valid filename
+  clean_title <- gsub("[^A-Za-z0-9.-]", "_", metadata$title)
+  
+  # Create a new file name based on the cleaned title and year
+  if (!is.null(metadata$year)) {
+    new_name <- file.path(folder_path, paste0(clean_title, "_", metadata$year, ".pdf"))
+  } else {
+    new_name <- file.path(folder_path, paste0(clean_title, ".pdf"))
+  }
+  
+  # Rename the file
+  tryCatch({
+    file.rename(pdf_file, new_name)
+    cat("Renamed:", pdf_file, "to", new_name, "\n")
+  }, error = function(e) {
+    cat("Error renaming:", pdf_file, "\n")
+  })
+}
